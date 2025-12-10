@@ -98,14 +98,29 @@
         }
 
         .actions button {
-            width: 48%;
-            margin: 2px 1%;
-            background: #ff4d4d;
-        }
+    width: 48%;
+    margin: 2px 1%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
 
-        .actions button.edit {
-            background: #ffa640;
-        }
+.actions button:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.actions button.edit {
+    background: #fbbf24;
+}
+
+.actions button.delete {
+    background: #ef4444;
+}
 
         canvas {
             margin-top: 30px;
@@ -121,26 +136,31 @@
 <div class="container">
 
     <div class="card">
-        <h2>Adicionar Registro</h2>
-        <input type="date" id="data">
-        <input type="number" id="peso" step="0.01" placeholder="Peso (kg)">
-        <button onclick="adicionarRegistro()">Salvar</button>
-    </div>
+    <h2>Adicionar Registro</h2>
+
+    <input type="date" id="data">
+    <input type="number" id="peso" step="0.01" placeholder="Peso (kg)">
+    <textarea id="obs" placeholder="Observações (opcional)" style="width:100%;height:70px;padding:10px;border-radius:8px;margin-top:8px;"></textarea>
+
+    <button onclick="adicionarRegistro()">Salvar</button>
+</div>
 
     <div class="card">
         <h2>Tabela de Evolução</h2>
         <table>
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Dias de vida</th>
-                    <th>Peso (kg)</th>
-                    <th>Ganho (g)</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="tabela-registros"></tbody>
-        </table>
+    <thead>
+        <tr>
+            <th>Data</th>
+            <th>Dias</th>
+            <th>Peso (kg)</th>
+            <th>Ganho (g)</th>
+            <th>+7 dias (g)</th>
+            <th>Obs</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody id="tabela-registros"></tbody>
+</table>
     </div>
 
     <div class="card">
@@ -249,61 +269,81 @@ function renderTableAndChart(arr){
   // build table rows (newest first)
   const rev = [...arr].reverse();
   for(let i=0; i<rev.length; i++){
-    const r = rev[i];
-    const tr = document.createElement('tr');
+  const r = rev[i];
+  const tr = document.createElement('tr');
 
-    // date display
-    const tdDate = document.createElement('td'); tdDate.textContent = isoToDisplay(r.date);
+  const tdDate = document.createElement('td'); 
+  tdDate.textContent = isoToDisplay(r.date);
 
-    // days of life computed automatically
-    const tdDays = document.createElement('td'); tdDays.textContent = daysSince(BIRTH_ISO, r.date);
+  const tdDays = document.createElement('td'); 
+  tdDays.textContent = daysSince(BIRTH_ISO, r.date);
 
-    // weight
-    const tdWeight = document.createElement('td'); tdWeight.textContent = r.weight.toFixed(3);
+  const tdWeight = document.createElement('td'); 
+  tdWeight.textContent = r.weight.toFixed(3);
 
-    // ganho em gramas desde o registro anterior (compare with previous older record)
-    let gainText = '-';
-    // find previous (older) record in ascending array
-    const idxAsc = arr.findIndex(x => x.key === r.key);
-    if(idxAsc > 0){
-      const prev = arr[idxAsc - 1];
-      const gainKg = r.weight - prev.weight;
-      const gainG = Math.round(gainKg * 1000);
-      gainText = (gainG >= 0 ? '+' : '') + gainG + ' g';
-    }
-    const tdGain = document.createElement('td'); tdGain.textContent = gainText;
-
-    // actions
-    const tdActions = document.createElement('td');
-    tdActions.className = 'actions';
-
-    const btnEdit = document.createElement('button');
-    btnEdit.textContent = 'Editar';
-    btnEdit.className = 'edit';
-    btnEdit.onclick = () => {
-      inputDate.value = r.date;
-      inputPeso.value = r.weight;
-      window.scrollTo({top:0, behavior:'smooth'});
-    };
-
-    const btnDel = document.createElement('button');
-    btnDel.textContent = 'Excluir';
-    btnDel.onclick = async () => {
-      if(!confirm('Excluir registro de ' + isoToDisplay(r.date) + '?')) return;
-      await remove(ref(db, `${basePath}/${r.key}`));
-    };
-
-    tdActions.appendChild(btnEdit);
-    tdActions.appendChild(btnDel);
-
-    tr.appendChild(tdDate);
-    tr.appendChild(tdDays);
-    tr.appendChild(tdWeight);
-    tr.appendChild(tdGain);
-    tr.appendChild(tdActions);
-
-    tabela.appendChild(tr);
+  // ganho diário normal
+  let gainText = '-';
+  const idxAsc = arr.findIndex(x => x.key === r.key);
+  if(idxAsc > 0){
+    const prev = arr[idxAsc-1];
+    const gainG = Math.round((r.weight - prev.weight) * 1000);
+    gainText = gainG >= 0 ? `+${gainG} g` : `${gainG} g`;
   }
+
+  const tdGain = document.createElement('td'); 
+  tdGain.textContent = gainText;
+
+  // ganho em 7 dias
+  let gain7 = '-';
+  const target = daysSince(BIRTH_ISO, r.date) - 7;
+  const match = arr.find(v => daysSince(BIRTH_ISO, v.date) === target);
+  if(match){
+    gain7 = Math.round((r.weight - match.weight) * 1000);
+    gain7 = (gain7 >= 0 ? '+' : '') + gain7 + ' g';
+  }
+
+  const tdGain7 = document.createElement('td');
+  tdGain7.textContent = gain7;
+
+  // observação
+  const tdObs = document.createElement('td');
+  tdObs.textContent = r.obs || "-";
+
+  // actions
+  const tdActions = document.createElement('td');
+  tdActions.className = 'actions';
+
+  const btnEdit = document.createElement('button');
+  btnEdit.textContent = 'Editar';
+  btnEdit.className = 'edit';
+  btnEdit.onclick = () => {
+    inputDate.value = r.date;
+    inputPeso.value = r.weight;
+    document.getElementById('obs').value = r.obs || "";
+    window.scrollTo({top:0, behavior:'smooth'});
+  };
+
+  const btnDel = document.createElement('button');
+  btnDel.textContent = 'Excluir';
+  btnDel.className = 'delete';
+  btnDel.onclick = async () => {
+    if(!confirm(`Excluir registro de ${isoToDisplay(r.date)}?`)) return;
+    await remove(ref(db, `${basePath}/${r.key}`));
+  };
+
+  tdActions.appendChild(btnEdit);
+  tdActions.appendChild(btnDel);
+
+  tr.appendChild(tdDate);
+  tr.appendChild(tdDays);
+  tr.appendChild(tdWeight);
+  tr.appendChild(tdGain);
+  tr.appendChild(tdGain7);
+  tr.appendChild(tdObs);
+  tr.appendChild(tdActions);
+
+  tabela.appendChild(tr);
+}
 }
 
 // === realtime listener ===
@@ -318,13 +358,21 @@ onValue(weightsRef, (snap) => {
 async function adicionarRegistro(){
   const date = inputDate.value;
   const peso = parseFloat(inputPeso.value);
+  const obs = document.getElementById('obs').value || "";
+
   if(!date || isNaN(peso)) { alert('Preencha data e peso'); return; }
 
-  const payload = { date, weight: Number(peso.toFixed(3)), ts: Date.now() };
+  const payload = { 
+    date, 
+    weight: Number(peso.toFixed(3)), 
+    obs,
+    ts: Date.now() 
+  };
+
   await set(ref(db, `${basePath}/${date}`), payload);
 
-  // clear peso (keep date for convenience)
   inputPeso.value = '';
+  document.getElementById('obs').value = '';
 }
 
 // export CSV (oldest -> newest)
