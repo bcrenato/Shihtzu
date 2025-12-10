@@ -1,434 +1,361 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Evolução de Peso — Shih Tzu</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolução de Peso do Filhote</title>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    :root{
-      --bg:#0b1220;
-      --card:#071428;
-      --glass: rgba(255,255,255,0.03);
-      --muted:#9fb4c9;
-      --accent:#7dd3fc;
-      --accent-2:#60a5fa;
-      --success:#9be7b5;
-      --danger:#ffb4b4;
-      color-scheme: dark;
-      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
-    *{box-sizing:border-box}
-    html,body{
-      height:100%;
-      margin:0;
-      background: radial-gradient(circle at top, #0d1a33, #050b18);
-      color:#e6f0fb;
-      -webkit-font-smoothing: antialiased;
-    }
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0e1117, #1a1f27);
+            color: #fff;
+        }
 
-    /* layout core */
-    .container{
-      max-width:1100px;
-      margin:28px auto;
-      padding:18px;
-      animation: fadeIn 0.7s ease;
-    }
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        header {
+            padding: 20px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
 
-    header{
-      display:flex; 
-      gap:12px; 
-      align-items:center; 
-      justify-content:space-between;
-      padding-bottom:14px;
-    }
-    header h1{font-size:22px; margin:0}
-    .sub{color:var(--muted); font-size:13px}
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
 
-    .layout{
-      display:grid;
-      grid-template-columns: 1fr 360px;
-      gap:16px;
-      margin-top:18px;
-    }
-    @media(max-width:980px){
-      .layout{grid-template-columns:1fr}
-    }
+        .card {
+            background: rgba(255,255,255,0.06);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.3);
+            backdrop-filter: blur(12px);
+        }
 
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      border-radius:14px;
-      padding:18px;
-      box-shadow: 0 10px 30px rgba(2,6,23,0.5);
-      backdrop-filter: blur(6px);
-      transition: transform .2s;
-    }
-    .card:hover{transform: translateY(-3px)}
+        h2 {
+            margin-top: 0;
+            font-weight: 600;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
 
-    .btn{
-      padding:8px 12px; 
-      border-radius:10px; 
-      border:0; 
-      cursor:pointer; 
-      font-weight:600;
-      transition: opacity .2s, transform .2s;
-    }
-    .btn:hover{opacity:.8; transform: scale(.97)}
-    .btn-prim{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#012233}
-    .btn-ghost{
-      background:transparent; 
-      border:1px solid rgba(255,255,255,0.06); 
-      color:var(--muted)
-    }
+        input, button {
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
 
-    .small{font-size:13px; color:var(--muted)}
-    table{width:100%; border-collapse:collapse; margin-top:12px; font-size:14px}
-    th,td{padding:10px 8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.05)}
-    th{color:var(--muted); font-weight:600; font-size:13px}
-    .editable{background:transparent; border:0; color:var(--accent); cursor:pointer; font-size:13px}
-    .danger{color:var(--danger)}
+        input {
+            margin-bottom: 10px;
+        }
 
-    /* inputs */
-    input, select{
-      padding:10px 12px;
-      border-radius:10px; 
-      border:1px solid rgba(255,255,255,0.05); 
-      background:var(--glass);
-      color:inherit; 
-      width:100%;
-      font-size:14px;
-    }
+        button {
+            cursor: pointer;
+            font-weight: 600;
+            background: #4a7dff;
+            color: #fff;
+            transition: background 0.3s;
+        }
 
-    footer{
-      margin-top:22px;
-      font-size:12px; 
-      color:var(--muted);
-      text-align:center;
-      padding:20px 0;
-    }
-  </style>
+        button:hover {
+            background: #3a68d8;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        table thead {
+            background: rgba(255,255,255,0.12);
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .actions button {
+            width: 48%;
+            margin: 2px 1%;
+            background: #ff4d4d;
+        }
+
+        .actions button.edit {
+            background: #ffa640;
+        }
+
+        canvas {
+            margin-top: 30px;
+            width: 100%;
+            height: 300px;
+        }
+    </style>
 </head>
-
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>Evolução de Peso — Shih Tzu</h1>
-        <div class="sub">Acompanhe o crescimento real do filhote, atualizado diariamente.</div>
-      </div>
 
-      <div class="controls">
-        <div class="small pill">Última leitura: <span id="last-read">—</span></div>
-        <button id="exportCsv" class="btn btn-ghost">Exportar CSV</button>
-      </div>
-    </header>
+<header>Evolução de Peso do Filhote</header>
 
-    <div class="layout">
+<div class="container">
 
-      <!-- LEFT -->
-      <div>
-        <div class="card">
-          <strong>Gráfico de Crescimento</strong>
-          <div class="small">Peso real + linha de tendência</div>
-
-          <div style="height:320px; margin-top:12px;">
-            <canvas id="chart"></canvas>
-          </div>
-
-          <div style="display:flex; gap:8px; margin-top:12px;">
-            <button id="toggleTrend" class="btn btn-ghost">Tendência</button>
-            <button id="clearView" class="btn btn-ghost">Limpar</button>
-            <div style="flex:1"></div>
-            <div class="small">Registros: <span id="count">0</span></div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:16px;">
-          <strong>Tabela — Dados reais</strong>
-          <div class="small">Mais recente primeiro</div>
-
-          <div style="overflow:auto; max-height:360px; margin-top:12px;">
-            <table>
-              <thead>
-                <tr><th>Data</th><th>Dias</th><th>Peso (kg)</th><th>Ações</th></tr>
-              </thead>
-              <tbody id="tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT -->
-      <div class="right">
-        <div class="card">
-          <strong>Adicionar / Atualizar Peso</strong>
-
-          <form id="form">
-            <div class="row" style="margin-top:10px">
-              <label style="width:90px">Data</label>
-              <input id="date" type="date" required>
-            </div>
-
-            <div class="row" style="margin-top:10px">
-              <label style="width:90px">Peso</label>
-              <input id="weight" type="number" step="0.001" required placeholder="ex: 1.820">
-            </div>
-
-            <div class="row" style="margin-top:10px">
-              <label style="width:90px">Dias</label>
-              <input id="day" type="number" placeholder="opcional">
-            </div>
-
-            <div style="margin-top:12px; display:flex; gap:10px;">
-              <button class="btn btn-prim" type="submit">Salvar</button>
-              <button type="button" id="btnSample" class="btn btn-ghost">Exemplo</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="card small">
-          <strong>Deploy</strong>
-          <ol>
-            <li>Faça upload no GitHub (branch main).</li>
-            <li>Ative GitHub Pages → "/root".</li>
-            <li>Pronto: link público disponível.</li>
-          </ol>
-        </div>
-      </div>
+    <div class="card">
+        <h2>Adicionar Registro</h2>
+        <input type="date" id="data">
+        <input type="number" id="peso" step="0.01" placeholder="Peso (kg)">
+        <button onclick="adicionarRegistro()">Salvar</button>
     </div>
 
-    <footer>
-      Criado para acompanhar o crescimento real do filhote, dia a dia.
-    </footer>
-  </div>
+    <div class="card">
+        <h2>Tabela de Evolução</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Dias de vida</th>
+                    <th>Peso (kg)</th>
+                    <th>Ganho (g)</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-registros"></tbody>
+        </table>
+    </div>
 
-  <!-- Firebase -->
+    <div class="card">
+        <h2>Gráfico de Evolução</h2>
+        <canvas id="grafico"></canvas>
+    </div>
+
+</div>
+
   <script type="module">
-    /* ==== SEU FIREBASE CONFIG (mantido exatamente como enviou) ==== */
-    const FIREBASE_CONFIG = {
-      apiKey: "AIzaSyDgC8CLVszMnwZzvu1FF0-hmHH2K7G1BgQ",
-      authDomain: "shihtzu-7533b.firebaseapp.com",
-      projectId: "shihtzu-7533b",
-      storageBucket: "shihtzu-7533b.firebasestorage.app",
-      messagingSenderId: "188564051994",
-      appId: "1:188564051994:web:5a27ecb209c83e959fd9a3",
-      measurementId: "G-R8MYC7KZDL"
-    };
+/* ==========================
+   PARTE 2 — JavaScript
+   ==========================
+   - Substitua FIREBASE_CONFIG pelo seu config do Firebase (se já estiver no site, não precisa trocar).
+   - Usa Realtime Database no caminho: /weights/{YYYY-MM-DD}
+   - Data de nascimento fixada: 18/09/2025
+*/
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+// ====== CONFIGURE AQUI (cole seu config se necessário) ======
+const FIREBASE_CONFIG = {
+  // Se você já tem o objeto no index, remova esse bloco ou substitua pelos seus dados.
+  apiKey: "REPLACE_ME",
+  authDomain: "REPLACE_ME.firebaseapp.com",
+  databaseURL: "https://REPLACE_ME-default-rtdb.firebaseio.com",
+  projectId: "REPLACE_ME",
+  storageBucket: "REPLACE_ME.appspot.com",
+  messagingSenderId: "REPLACE_ME",
+  appId: "REPLACE_ME"
+};
+// ===========================================================
 
-    const app = initializeApp(FIREBASE_CONFIG);
-    const db = getDatabase(app);
-    const basePath = "weights";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-    /* DOM references */
-    const tbody = document.getElementById("tbody");
-    const lastRead = document.getElementById("last-read");
-    const countEl = document.getElementById("count");
-    const form = document.getElementById("form");
-    const dateInput = document.getElementById("date");
-    const weightInput = document.getElementById("weight");
-    const dayInput = document.getElementById("day");
-    const btnSample = document.getElementById("btnSample");
-    const exportBtn = document.getElementById("exportCsv");
-    const toggleTrend = document.getElementById("toggleTrend");
-    const clearView = document.getElementById("clearView");
+const app = initializeApp(FIREBASE_CONFIG);
+const db = getDatabase(app);
+const basePath = 'weights';
 
-    /* Chart */
-    const ctx = document.getElementById("chart").getContext("2d");
-    let showTrend = true;
+// === constants ===
+const BIRTH_ISO = "2025-09-18"; // data de nascimento (YYYY-MM-DD)
 
-    let chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: [],
-        datasets: [
-          {
-            label: "Peso (kg)",
-            data: [],
-            borderWidth:2,
-            tension:0.3,
-            pointRadius:4,
-            backgroundColor:"rgba(125,211,252,0.08)",
-            borderColor:"#7dd3fc",
-            fill:true
-          },
-          {
-            label:"Tendência",
-            data:[],
-            borderDash:[6,4],
-            borderWidth:1.5,
-            pointRadius:0,
-            borderColor:"#ffd87a",
-            fill:false,
-            hidden:!showTrend
-          }
-        ]
-      },
-      options:{
-        responsive:true,
-        plugins:{legend:{labels:{color:"#cfeeff"}}},
-        scales:{
-          x:{ticks:{color:"#cfeeff"}},
-          y:{ticks:{color:"#cfeeff"}}
-        }
-      }
-    });
+// === DOM refs ===
+const tabela = document.getElementById('tabela-registros');
+const graficoEl = document.getElementById('grafico');
+const inputDate = document.getElementById('data');
+const inputPeso = document.getElementById('peso');
 
-    /* Helpers */
-    function isoToDisplay(iso){
-      const p = iso.split("-");
-      return `${p[2]}/${p[1]}/${p[0]}`;
+// prefill date with today
+inputDate.value = (new Date()).toISOString().slice(0,10);
+
+// Chart.js setup
+const ctx = graficoEl.getContext('2d');
+const gradient = ctx.createLinearGradient(0,0,0,300);
+gradient.addColorStop(0, 'rgba(125,211,252,0.12)');
+gradient.addColorStop(1, 'rgba(125,211,252,0.02)');
+
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: { labels: [], datasets: [{ label: 'Peso (kg)', data: [], tension:0.3, backgroundColor: gradient, borderColor:'#57b7ff', pointRadius:4, fill:true }]},
+  options: {
+    responsive:true,
+    plugins:{legend:{display:false}},
+    scales:{ x:{ticks:{color:'#cfeeff'}}, y:{ ticks:{color:'#cfeeff'} } }
+  }
+});
+
+// === helpers ===
+function isoToDisplay(iso){ if(!iso) return ''; const p = iso.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; }
+function displayToIso(display){ // dd/mm/yyyy -> yyyy-mm-dd (not used but handy)
+  const p = display.split('/');
+  if(p.length!==3) return display;
+  return `${p[2]}-${p[1]}-${p[0]}`;
+}
+function todayIso(){ return (new Date()).toISOString().slice(0,10); }
+function daysSince(birthIso, iso){ const b=new Date(birthIso+'T00:00:00'); const d=new Date(iso+'T00:00:00'); return Math.round((d-b)/(1000*60*60*24)); }
+
+// convert snapshot object to sorted array (ascending by date)
+function snapshotToArray(obj){
+  const arr = Object.keys(obj || {}).map(k => {
+    const it = obj[k];
+    return { key: k, date: it.date || k, weight: Number(it.weight), ts: it.ts || 0 };
+  });
+  // sort ascending (oldest -> newest)
+  arr.sort((a,b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0));
+  return arr;
+}
+
+// render table & compute gains
+function renderTableAndChart(arr){
+  // arr is ascending by date
+  // table should show newest first
+  tabela.innerHTML = '';
+  if(arr.length === 0){
+    tabela.innerHTML = `<tr><td colspan="5">Sem dados</td></tr>`;
+    chart.data.labels = []; chart.data.datasets[0].data = []; chart.update();
+    return;
+  }
+
+  // prepare chart data
+  const labels = arr.map(r => isoToDisplay(r.date));
+  const data = arr.map(r => Number(r.weight.toFixed(3)));
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
+
+  // build table rows (newest first)
+  const rev = [...arr].reverse();
+  for(let i=0; i<rev.length; i++){
+    const r = rev[i];
+    const tr = document.createElement('tr');
+
+    // date display
+    const tdDate = document.createElement('td'); tdDate.textContent = isoToDisplay(r.date);
+
+    // days of life computed automatically
+    const tdDays = document.createElement('td'); tdDays.textContent = daysSince(BIRTH_ISO, r.date);
+
+    // weight
+    const tdWeight = document.createElement('td'); tdWeight.textContent = r.weight.toFixed(3);
+
+    // ganho em gramas desde o registro anterior (compare with previous older record)
+    let gainText = '-';
+    // find previous (older) record in ascending array
+    const idxAsc = arr.findIndex(x => x.key === r.key);
+    if(idxAsc > 0){
+      const prev = arr[idxAsc - 1];
+      const gainKg = r.weight - prev.weight;
+      const gainG = Math.round(gainKg * 1000);
+      gainText = (gainG >= 0 ? '+' : '') + gainG + ' g';
     }
+    const tdGain = document.createElement('td'); tdGain.textContent = gainText;
 
-    function todayIso(){
-      return new Date().toISOString().slice(0,10);
-    }
+    // actions
+    const tdActions = document.createElement('td');
+    tdActions.className = 'actions';
 
-    /* Realtime listener */
-    onValue(ref(db, basePath), snap => {
-      const data = snap.val() || {};
-      const arr = Object.values(data).map(v => v)
-        .sort((a,b)=> a.date < b.date ? 1 : -1);
-
-      renderTable(arr);
-      renderChart(arr);
-
-      lastRead.textContent = new Date().toLocaleString();
-      countEl.textContent = arr.length;
-    });
-
-    /* Render table */
-    function renderTable(arr){
-      tbody.innerHTML = "";
-      if(arr.length===0){
-        tbody.innerHTML = "<tr><td colspan='4' class='small'>Sem dados ainda</td></tr>";
-        return;
-      }
-
-      for(const r of arr){
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-          <td>${isoToDisplay(r.date)}</td>
-          <td>${r.day ?? "-"}</td>
-          <td>${r.weight.toFixed(3)}</td>
-          <td>
-            <button class="editable">Editar</button>
-            <button class="editable danger" style="margin-left:8px">Excluir</button>
-          </td>
-        `;
-
-        tr.querySelector(".editable").onclick = () => {
-          dateInput.value = r.date;
-          weightInput.value = r.weight;
-          dayInput.value = r.day ?? "";
-          window.scrollTo({top:0, behavior:"smooth"});
-        };
-
-        tr.querySelector(".danger").onclick = () => {
-          if(confirm("Excluir entrada de " + isoToDisplay(r.date) + "?")){
-            remove(ref(db, `${basePath}/${r.date}`));
-          }
-        };
-
-        tbody.appendChild(tr);
-      }
-    }
-
-    /* Render chart */
-    function renderChart(arr){
-      const sorted = [...arr].sort((a,b)=> a.date < b.date ? -1 : 1);
-      const labels = sorted.map(x => isoToDisplay(x.date));
-      const data = sorted.map(x => Number(x.weight));
-
-      chart.data.labels = labels;
-      chart.data.datasets[0].data = data;
-
-      if(sorted.length >= 2){
-        const xs = data.map((_,i)=>i);
-        const ys = data;
-        const n = xs.length;
-
-        const sumX = xs.reduce((a,b)=>a+b,0);
-        const sumY = ys.reduce((a,b)=>a+b,0);
-        const sumXY = xs.reduce((a,b,i)=>a + b*ys[i],0);
-        const sumXX = xs.reduce((a,b)=>a + b*b,0);
-
-        const denom = n*sumXX - sumX*sumX;
-        const m = (n*sumXY - sumX*sumY) / denom;
-        const c = (sumY - m*sumX) / n;
-
-        const trend = xs.map(x => m*x + c);
-        chart.data.datasets[1].data = trend;
-        chart.data.datasets[1].hidden = !showTrend;
-      }
-
-      chart.update();
-    }
-
-    /* Form submit */
-    form.addEventListener("submit", async e => {
-      e.preventDefault();
-      const date = dateInput.value;
-      const weight = Number(weightInput.value);
-      const day = dayInput.value ? Number(dayInput.value) : null;
-
-      await set(ref(db, `${basePath}/${date}`), {
-        date,
-        weight,
-        day,
-        ts: Date.now()
-      });
-
-      weightInput.value = "";
-      dayInput.value = "";
-    });
-
-    btnSample.onclick = () => {
-      dateInput.value = todayIso();
-      weightInput.value = (1.2 + Math.random()*0.9).toFixed(3);
+    const btnEdit = document.createElement('button');
+    btnEdit.textContent = 'Editar';
+    btnEdit.className = 'edit';
+    btnEdit.onclick = () => {
+      inputDate.value = r.date;
+      inputPeso.value = r.weight;
+      window.scrollTo({top:0, behavior:'smooth'});
     };
 
-    exportBtn.onclick = () => {
-      const rows = Array.from(tbody.querySelectorAll("tr"))
-        .map(tr => Array.from(tr.querySelectorAll("td")).map(td => td.textContent.trim()))
-        .filter(r => r.length >= 3);
-
-      if(rows.length === 0) return alert("Sem dados.");
-
-      const csv = ["Data;Dias;Peso_kg", ...rows.map(r => r.join(";"))].join("\n");
-      const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "shihtzu_peso.csv";
-      a.click();
-      URL.revokeObjectURL(url);
+    const btnDel = document.createElement('button');
+    btnDel.textContent = 'Excluir';
+    btnDel.onclick = async () => {
+      if(!confirm('Excluir registro de ' + isoToDisplay(r.date) + '?')) return;
+      await remove(ref(db, `${basePath}/${r.key}`));
     };
 
-    toggleTrend.onclick = () => {
-      showTrend = !showTrend;
-      chart.data.datasets[1].hidden = !showTrend;
-      chart.update();
-    };
+    tdActions.appendChild(btnEdit);
+    tdActions.appendChild(btnDel);
 
-    clearView.onclick = () => {
-      chart.data.labels = [];
-      chart.data.datasets.forEach(d => d.data = []);
-      chart.update();
-    };
+    tr.appendChild(tdDate);
+    tr.appendChild(tdDays);
+    tr.appendChild(tdWeight);
+    tr.appendChild(tdGain);
+    tr.appendChild(tdActions);
 
-    dateInput.value = todayIso();
-  </script>
+    tabela.appendChild(tr);
+  }
+}
+
+// === realtime listener ===
+const weightsRef = ref(db, basePath);
+onValue(weightsRef, (snap) => {
+  const obj = snap.val() || {};
+  const arr = snapshotToArray(obj); // ascending
+  renderTableAndChart(arr);
+});
+
+// === add / update record ===
+async function adicionarRegistro(){
+  const date = inputDate.value;
+  const peso = parseFloat(inputPeso.value);
+  if(!date || isNaN(peso)) { alert('Preencha data e peso'); return; }
+
+  const payload = { date, weight: Number(peso.toFixed(3)), ts: Date.now() };
+  await set(ref(db, `${basePath}/${date}`), payload);
+
+  // clear peso (keep date for convenience)
+  inputPeso.value = '';
+}
+
+// export CSV (oldest -> newest)
+function exportCSV(){
+  // read current table rows (ascending from chart data)
+  const labels = chart.data.labels || [];
+  const data = chart.data.datasets[0].data || [];
+  if(labels.length === 0) { alert('Sem dados para exportar'); return; }
+  // labels are dd/mm/yyyy, convert back to yyyy-mm-dd
+  const rows = [];
+  for(let i=0;i<labels.length;i++){
+    const parts = labels[i].split('/');
+    const iso = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    rows.push([iso, '', data[i]]); // days empty: can be computed by consumer
+  }
+  const header = 'date;weight_kg\n';
+  const csv = header + rows.map(r => `${r[0]};${Number(r[2]).toFixed(3)}`).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'peso_shihtzu.csv'; a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// attach export to window for easy call or create button
+window.adicionarRegistro = adicionarRegistro;
+window.exportCSV = exportCSV;
+
+// optional: link export to button if you have one in DOM
+const exportBtn = document.getElementById('exportCsv');
+if(exportBtn) exportBtn.onclick = exportCSV;
+
+</script>
 </body>
 </html>
