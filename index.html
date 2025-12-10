@@ -1,1 +1,346 @@
-xxxx
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Evolução de Peso — Shih Tzu</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Google Fonts (opcional) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#071428;
+      --glass: rgba(255,255,255,0.03);
+      --muted:#9fb4c9;
+      --accent:#7dd3fc;
+      --accent-2:#60a5fa;
+      --success:#9be7b5;
+      --danger:#ffb4b4;
+      color-scheme: dark;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; background: linear-gradient(180deg,#051023 0%, #071428 100%); color:#e6f0fb;}
+    .container{max-width:1100px; margin:28px auto; padding:18px;}
+    header{display:flex; gap:12px; align-items:center; justify-content:space-between}
+    header h1{font-size:20px; margin:0}
+    .sub{color:var(--muted); font-size:13px}
+    .layout{display:grid; grid-template-columns: 1fr 380px; gap:16px; margin-top:18px}
+    @media(max-width:980px){ .layout{grid-template-columns:1fr} }
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border-radius:12px; padding:14px; box-shadow: 0 6px 18px rgba(2,6,23,0.6);}
+    .controls{display:flex; gap:8px; align-items:center}
+    .btn{padding:8px 12px; border-radius:10px; border:0; cursor:pointer; font-weight:600}
+    .btn-prim{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#012233}
+    .btn-ghost{background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted)}
+    .small{font-size:13px; color:var(--muted)}
+    form .row{display:flex; gap:8px; align-items:center; margin-top:8px}
+    input, select{padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:var(--glass); color:inherit; width:100%}
+    table{width:100%; border-collapse:collapse; margin-top:12px; font-size:14px}
+    th,td{padding:10px 8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.03)}
+    th{color:var(--muted); font-weight:600; font-size:13px}
+    .right{display:flex; flex-direction:column; gap:12px}
+    .chart-wrap{height:320px}
+    .row-between{display:flex; justify-content:space-between; align-items:center}
+    .muted{color:var(--muted)}
+    .pill{background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:999px; font-size:13px}
+    .danger{color:var(--danger)}
+    footer{margin-top:18px; font-size:12px; color:var(--muted)}
+    .actions{display:flex; gap:8px}
+    .editable{background:transparent; border:0; color:var(--accent); cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Evolução de Peso — Shih Tzu</h1>
+        <div class="sub">Insira ou atualize o peso diário. Os dados são salvos no Firebase Realtime Database em tempo real.</div>
+      </div>
+      <div class="controls">
+        <div class="pill small">Última leitura: <span id="last-read">—</span></div>
+        <button id="exportCsv" class="btn btn-ghost">Exportar CSV</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- LEFT: gráfico + tabela -->
+      <div>
+        <div class="card">
+          <div class="row-between">
+            <div>
+              <strong>Gráfico de Crescimento</strong>
+              <div class="small">Pontos reais (peso) com linha de tendência.</div>
+            </div>
+            <div class="small">Escala automática</div>
+          </div>
+          <div class="chart-wrap" style="margin-top:12px;">
+            <canvas id="chart" style="width:100%;height:100%"></canvas>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px; align-items:center;">
+            <button id="toggleTrend" class="btn btn-ghost">Alternar tendência</button>
+            <button id="clearView" class="btn btn-ghost">Limpar visual</button>
+            <div style="flex:1"></div>
+            <div class="small">Dados: <span id="count">0</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <div class="row-between">
+            <div><strong>Tabela — Dados Reais</strong><div class="small">Ordenado por data (mais recente em cima)</div></div>
+            <div class="small">Editar / Excluir</div>
+          </div>
+
+          <div style="overflow:auto; max-height:320px; margin-top:12px;">
+            <table>
+              <thead>
+                <tr><th>Data</th><th>Dias</th><th>Peso (kg)</th><th class="small">Ações</th></tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: form -->
+      <div class="right">
+        <div class="card">
+          <strong>Adicionar / Atualizar Peso</strong>
+          <form id="form">
+            <div class="row">
+              <label style="width:90px">Data</label>
+              <input id="date" type="date" required />
+            </div>
+            <div class="row">
+              <label style="width:90px">Peso (kg)</label>
+              <input id="weight" type="number" step="0.001" min="0" placeholder="ex: 1.750" required />
+            </div>
+            <div class="row">
+              <label style="width:90px">Dia vida</label>
+              <input id="day" type="number" min="0" placeholder="opcional" />
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+              <button class="btn btn-prim" type="submit">Salvar</button>
+              <button type="button" id="btnSample" class="btn btn-ghost">Exemplo</button>
+            </div>
+            <div class="small" style="margin-top:12px;">
+              <strong>Configuração:</strong> cole seu <code>FIREBASE_CONFIG</code> no script abaixo. Não exponha chaves de servidor.
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <strong>Configuração & Deploy</strong>
+          <ol class="small">
+            <li>Crie um projeto no <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a> e ative Realtime Database.</li>
+            <li>Copie o objeto de configuração Web (SDK v10 modular) e cole em <code>FIREBASE_CONFIG</code>.</li>
+            <li>Crie repo no GitHub, coloque este arquivo e habilite GitHub Pages (branch main, root).</li>
+            <li>Em produção, configure Realtime DB rules para exigir autenticação.</li>
+          </ol>
+        </div>
+
+        <div class="card small">
+          <strong>Segurança</strong>
+          <div style="margin-top:6px">No início você pode usar regras públicas para teste, mas em seguida configure <code>".read": "auth != null"</code> e autenticação (Email).<br><br>
+          Se quiser, eu mostro como integrar Firebase Auth (email) e proteger o banco.</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="small">
+      Desenvolvido para acompanhar o crescimento do seu filhote — insira diariamente e acompanhe em tempo real.
+    </footer>
+  </div>
+
+  <!-- Firebase modular SDK (v10) -->
+  <script type="module">
+    // ======== COLE AQUI SUA CONFIGURAÇÃO FIREBASE (Web SDK v10) ==========
+    // Vá ao Firebase Console → Configurações do projeto → seus apps → SDK
+    // Substitua o objeto abaixo pelo seu FIREBASE_CONFIG
+    const FIREBASE_CONFIG = {
+      apiKey: "REPLACE_ME",
+      authDomain: "REPLACE_ME.firebaseapp.com",
+      databaseURL: "https://REPLACE_ME-default-rtdb.firebaseio.com",
+      projectId: "REPLACE_ME",
+      storageBucket: "REPLACE_ME.appspot.com",
+      messagingSenderId: "REPLACE_ME",
+      appId: "REPLACE_ME"
+    };
+    // =====================================================================
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove, query, orderByChild } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    // Init
+    const app = initializeApp(FIREBASE_CONFIG);
+    const db = getDatabase(app);
+    const basePath = 'weights'; // caminho no Realtime DB
+
+    // DOM
+    const tbody = document.getElementById('tbody');
+    const lastRead = document.getElementById('last-read');
+    const countEl = document.getElementById('count');
+    const form = document.getElementById('form');
+    const dateInput = document.getElementById('date');
+    const weightInput = document.getElementById('weight');
+    const dayInput = document.getElementById('day');
+    const btnSample = document.getElementById('btnSample');
+    const exportBtn = document.getElementById('exportCsv');
+    const toggleTrend = document.getElementById('toggleTrend');
+    const clearView = document.getElementById('clearView');
+
+    // Chart
+    const ctx = document.getElementById('chart').getContext('2d');
+    let showTrend = true;
+    let chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          { label: 'Peso (kg)', data: [], borderWidth:2, pointRadius:4, tension:0.3, backgroundColor:'rgba(125,211,252,0.08)', borderColor:'#7dd3fc', fill:true },
+          { label: 'Tendência (linear)', data: [], borderDash:[6,4], borderWidth:1.5, pointRadius:0, borderColor:'#ffd87a', fill:false, hidden:!showTrend }
+        ]
+      },
+      options: {
+        responsive:true,
+        interaction:{mode:'index', intersect:false},
+        plugins:{legend:{labels:{color:'#cfeeff'}}},
+        scales:{
+          x:{ ticks:{color:'#cfeeff'} },
+          y:{ beginAtZero:false, ticks:{color:'#cfeeff'} }
+        }
+      }
+    });
+
+    // helpers
+    function isoToDisplay(iso){ // yyyy-mm-dd -> dd/mm/yyyy
+      const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0];
+    }
+    function todayIso(){ const d=new Date(); return d.toISOString().slice(0,10); }
+    function daysSince(birthIso, iso){ const b=new Date(birthIso), d=new Date(iso); return Math.round((d-b)/(1000*60*60*24)); }
+
+    // Listen realtime
+    const weightsRef = ref(db, basePath);
+    onValue(weightsRef, (snap) => {
+      const val = snap.val() || {};
+      // convert to array
+      const arr = Object.keys(val).map(k => {
+        const it = val[k];
+        return { key:k, date: it.date || k, weight: Number(it.weight), day: it.day ?? null, ts: it.ts ?? 0 };
+      }).sort((a,b)=> a.date < b.date ? 1 : -1); // newest first
+
+      renderTable(arr);
+      renderChart(arr);
+      lastRead.textContent = new Date().toLocaleString();
+      countEl.textContent = arr.length;
+    });
+
+    // render table
+    function renderTable(arr){
+      tbody.innerHTML = '';
+      if(arr.length===0){
+        tbody.innerHTML = '<tr><td colspan="4" class="small">Sem dados ainda</td></tr>'; return;
+      }
+      for(const r of arr){
+        const tr = document.createElement('tr');
+        const tdDate = document.createElement('td'); tdDate.textContent = isoToDisplay(r.date);
+        const tdDay = document.createElement('td'); tdDay.textContent = r.day ?? '-';
+        const tdWeight = document.createElement('td'); tdWeight.textContent = r.weight.toFixed(3);
+        const tdActions = document.createElement('td');
+
+        const btnEdit = document.createElement('button'); btnEdit.className='editable'; btnEdit.textContent='Editar';
+        btnEdit.onclick = () => { dateInput.value = r.date; weightInput.value = r.weight; dayInput.value = r.day ?? ''; window.scrollTo({top:0,behavior:'smooth'}); };
+
+        const btnDel = document.createElement('button'); btnDel.className='editable danger'; btnDel.textContent='Excluir';
+        btnDel.style.marginLeft='8px';
+        btnDel.onclick = async () => {
+          if(!confirm('Excluir entrada de '+ isoToDisplay(r.date) + '?')) return;
+          await remove(ref(db, `${basePath}/${r.key}`));
+        };
+
+        tdActions.appendChild(btnEdit); tdActions.appendChild(btnDel);
+        tr.appendChild(tdDate); tr.appendChild(tdDay); tr.appendChild(tdWeight); tr.appendChild(tdActions);
+        tbody.appendChild(tr);
+      }
+    }
+
+    // render chart (oldest->newest)
+    function renderChart(arr){
+      const sorted = [...arr].sort((a,b)=> a.date < b.date ? -1 : 1);
+      const labels = sorted.map(x => isoToDisplay(x.date));
+      const data = sorted.map(x => Number(x.weight.toFixed(3)));
+
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = data;
+
+      // compute simple linear regression for trendline (if enough points)
+      if(sorted.length >= 2){
+        const xs = data.map((_,i)=>i);
+        const ys = data;
+        const n = xs.length;
+        const sumX = xs.reduce((a,b)=>a+b,0);
+        const sumY = ys.reduce((a,b)=>a+b,0);
+        const sumXY = xs.reduce((a,b,i)=>a+ b*ys[i],0);
+        const sumXX = xs.reduce((a,b)=>a+b*b,0);
+        const denom = (n*sumXX - sumX*sumX) || 1;
+        const m = (n*sumXY - sumX*sumY)/denom;
+        const c = (sumY - m*sumX)/n;
+        const trend = xs.map(x => m*x + c);
+        chart.data.datasets[1].data = trend;
+        chart.data.datasets[1].hidden = !showTrend;
+      } else {
+        chart.data.datasets[1].data = [];
+      }
+
+      chart.update();
+    }
+
+    // form submit -> set at /weights/YYYY-MM-DD
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const date = dateInput.value;
+      const weight = parseFloat(weightInput.value);
+      const day = dayInput.value ? parseInt(dayInput.value,10) : null;
+      if(!date || isNaN(weight)) return alert('Preencha data e peso corretamente.');
+
+      const payload = { date, weight: Number(weight.toFixed(3)), day: day ?? null, ts: Date.now() };
+      await set(ref(db, `${basePath}/${date}`), payload);
+      // limpar (mantém a data para facilitar várias entradas)
+      weightInput.value = '';
+      dayInput.value = '';
+    });
+
+    btnSample.addEventListener('click', () => {
+      dateInput.value = todayIso();
+      weightInput.value = (1.5 + Math.random()*0.7).toFixed(3);
+      dayInput.value = '';
+    });
+
+    // export CSV
+    exportBtn.addEventListener('click', () => {
+      // read table rows currently rendered
+      const rows = Array.from(tbody.querySelectorAll('tr')).map(tr => {
+        const tds = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim());
+        return tds;
+      }).filter(r => r.length >= 3 && r[0] !== 'Sem dados ainda');
+      if(rows.length === 0) return alert('Sem dados para exportar.');
+      const csv = ['Data;Dias;Peso_kg', ...rows.map(r => `${r[0]};${r[1]};${r[2]}`)].join('\n');
+      const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'peso_shihtzu.csv'; a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    toggleTrend.addEventListener('click', () => { showTrend = !showTrend; chart.data.datasets[1].hidden = !showTrend; chart.update(); });
+
+    clearView.addEventListener('click', () => { chart.data.labels = []; chart.data.datasets.forEach(ds => ds.data = []); chart.update(); });
+
+    // prefill date with today
+    dateInput.value = todayIso();
+  </script>
+</body>
+</html>
