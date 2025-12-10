@@ -181,7 +181,6 @@
 
 // ====== CONFIGURE AQUI (cole seu config se necessário) ======
 const FIREBASE_CONFIG = {
-  // Se você já tem o objeto no index, remova esse bloco ou substitua pelos seus dados.
   apiKey: "AIzaSyDgC8CLVszMnwZzvu1FF0-hmHH2K7G1BgQ",
   authDomain: "shihtzu-7533b.firebaseapp.com",
   projectId: "shihtzu-7533b",
@@ -229,29 +228,54 @@ const chart = new Chart(ctx, {
 
 // === helpers ===
 function isoToDisplay(iso){ if(!iso) return ''; const p = iso.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; }
-function displayToIso(display){ // dd/mm/yyyy -> yyyy-mm-dd (not used but handy)
+
+function displayToIso(display){
   const p = display.split('/');
   if(p.length!==3) return display;
   return `${p[2]}-${p[1]}-${p[0]}`;
 }
-function todayIso(){ return (new Date()).toISOString().slice(0,10); }
-function daysSince(birthIso, iso){ const b=new Date(birthIso+'T00:00:00'); const d=new Date(iso+'T00:00:00'); return Math.round((d-b)/(1000*60*60*24)); }
 
-// convert snapshot object to sorted array (ascending by date)
+function todayIso(){ return (new Date()).toISOString().slice(0,10); }
+
+function daysSince(birthIso, iso){
+  const b = new Date(birthIso + "T00:00:00");
+  const d = new Date(iso + "T00:00:00");
+  return Math.round((d - b) / (1000 * 60 * 60 * 24));
+}
+
+function formatMonthsDays(birthIso, iso){
+  const totalDays = daysSince(birthIso, iso);
+
+  const b = new Date(birthIso + "T00:00:00");
+  const d = new Date(iso + "T00:00:00");
+
+  let months =
+    (d.getFullYear() - b.getFullYear()) * 12 +
+    (d.getMonth() - b.getMonth());
+
+  if (d.getDate() < b.getDate()) {
+    months -= 1;
+  }
+
+  const ref = new Date(birthIso + "T00:00:00");
+  ref.setMonth(ref.getMonth() + months);
+
+  const days = Math.round((d - ref) / (1000 * 60 * 60 * 24));
+
+  return `${totalDays}d — ${months}m ${days}d`;
+}
+
 function snapshotToArray(obj){
   const arr = Object.keys(obj || {}).map(k => {
     const it = obj[k];
     return { key: k, date: it.date || k, weight: Number(it.weight), ts: it.ts || 0 };
   });
-  // sort ascending (oldest -> newest)
   arr.sort((a,b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0));
   return arr;
 }
 
 // render table & compute gains
 function renderTableAndChart(arr){
-  // arr is ascending by date
-  // table should show newest first
   tabela.innerHTML = '';
   if(arr.length === 0){
     tabela.innerHTML = `<tr><td colspan="5">Sem dados</td></tr>`;
@@ -259,102 +283,96 @@ function renderTableAndChart(arr){
     return;
   }
 
-  // prepare chart data
   const labels = arr.map(r => isoToDisplay(r.date));
   const data = arr.map(r => Number(r.weight.toFixed(3)));
   chart.data.labels = labels;
   chart.data.datasets[0].data = data;
   chart.update();
 
-  // build table rows (newest first)
   const rev = [...arr].reverse();
   for(let i=0; i<rev.length; i++){
-  const r = rev[i];
-  const tr = document.createElement('tr');
+    const r = rev[i];
+    const tr = document.createElement('tr');
 
-  const tdDate = document.createElement('td'); 
-  tdDate.textContent = isoToDisplay(r.date);
+    const tdDate = document.createElement('td'); 
+    tdDate.textContent = isoToDisplay(r.date);
 
-  const tdDays = document.createElement('td'); 
-  tdDays.textContent = daysSince(BIRTH_ISO, r.date);
+    const tdDays = document.createElement('td'); 
+    tdDays.textContent = formatMonthsDays(BIRTH_ISO, r.date);  // ⭐ ALTERAÇÃO AQUI
 
-  const tdWeight = document.createElement('td'); 
-  tdWeight.textContent = r.weight.toFixed(3);
+    const tdWeight = document.createElement('td'); 
+    tdWeight.textContent = r.weight.toFixed(3);
 
-  // ganho diário normal
-  let gainText = '-';
-  const idxAsc = arr.findIndex(x => x.key === r.key);
-  if(idxAsc > 0){
-    const prev = arr[idxAsc-1];
-    const gainG = Math.round((r.weight - prev.weight) * 1000);
-    gainText = gainG >= 0 ? `+${gainG} g` : `${gainG} g`;
+    let gainText = '-';
+    const idxAsc = arr.findIndex(x => x.key === r.key);
+    if(idxAsc > 0){
+      const prev = arr[idxAsc-1];
+      const gainG = Math.round((r.weight - prev.weight) * 1000);
+      gainText = gainG >= 0 ? `+${gainG} g` : `${gainG} g`;
+    }
+
+    const tdGain = document.createElement('td'); 
+    tdGain.textContent = gainText;
+
+    let gain7 = '-';
+    const target = daysSince(BIRTH_ISO, r.date) - 7;
+    const match = arr.find(v => daysSince(BIRTH_ISO, v.date) === target);
+    if(match){
+      gain7 = Math.round((r.weight - match.weight) * 1000);
+      gain7 = (gain7 >= 0 ? '+' : '') + gain7 + ' g';
+    }
+
+    const tdGain7 = document.createElement('td');
+    tdGain7.textContent = gain7;
+
+    const tdObs = document.createElement('td');
+    tdObs.textContent = r.obs || "-";
+
+    const tdActions = document.createElement('td');
+    tdActions.className = 'actions';
+
+    const btnEdit = document.createElement('button');
+    btnEdit.textContent = 'Editar';
+    btnEdit.className = 'edit';
+    btnEdit.onclick = () => {
+      inputDate.value = r.date;
+      inputPeso.value = r.weight;
+      document.getElementById('obs').value = r.obs || "";
+      window.scrollTo({top:0, behavior:'smooth'});
+    };
+
+    const btnDel = document.createElement('button');
+    btnDel.textContent = 'Excluir';
+    btnDel.className = 'delete';
+    btnDel.onclick = async () => {
+      if(!confirm(`Excluir registro de ${isoToDisplay(r.date)}?`)) return;
+      await remove(ref(db, `${basePath}/${r.key}`));
+    };
+
+    tdActions.appendChild(btnEdit);
+    tdActions.appendChild(btnDel);
+
+    tr.appendChild(tdDate);
+    tr.appendChild(tdDays);
+    tr.appendChild(tdWeight);
+    tr.appendChild(tdGain);
+    tr.appendChild(tdGain7);
+    tr.appendChild(tdObs);
+    tr.appendChild(tdActions);
+
+    tabela.appendChild(tr);
   }
-
-  const tdGain = document.createElement('td'); 
-  tdGain.textContent = gainText;
-
-  // ganho em 7 dias
-  let gain7 = '-';
-  const target = daysSince(BIRTH_ISO, r.date) - 7;
-  const match = arr.find(v => daysSince(BIRTH_ISO, v.date) === target);
-  if(match){
-    gain7 = Math.round((r.weight - match.weight) * 1000);
-    gain7 = (gain7 >= 0 ? '+' : '') + gain7 + ' g';
-  }
-
-  const tdGain7 = document.createElement('td');
-  tdGain7.textContent = gain7;
-
-  // observação
-  const tdObs = document.createElement('td');
-  tdObs.textContent = r.obs || "-";
-
-  // actions
-  const tdActions = document.createElement('td');
-  tdActions.className = 'actions';
-
-  const btnEdit = document.createElement('button');
-  btnEdit.textContent = 'Editar';
-  btnEdit.className = 'edit';
-  btnEdit.onclick = () => {
-    inputDate.value = r.date;
-    inputPeso.value = r.weight;
-    document.getElementById('obs').value = r.obs || "";
-    window.scrollTo({top:0, behavior:'smooth'});
-  };
-
-  const btnDel = document.createElement('button');
-  btnDel.textContent = 'Excluir';
-  btnDel.className = 'delete';
-  btnDel.onclick = async () => {
-    if(!confirm(`Excluir registro de ${isoToDisplay(r.date)}?`)) return;
-    await remove(ref(db, `${basePath}/${r.key}`));
-  };
-
-  tdActions.appendChild(btnEdit);
-  tdActions.appendChild(btnDel);
-
-  tr.appendChild(tdDate);
-  tr.appendChild(tdDays);
-  tr.appendChild(tdWeight);
-  tr.appendChild(tdGain);
-  tr.appendChild(tdGain7);
-  tr.appendChild(tdObs);
-  tr.appendChild(tdActions);
-
-  tabela.appendChild(tr);
-}
 }
 
-// === realtime listener ===
+// realtime listener
 const weightsRef = ref(db, basePath);
 onValue(weightsRef, (snap) => {
   const obj = snap.val() || {};
-  const arr = snapshotToArray(obj); // ascending
+  const arr = snapshotToArray(obj);
   renderTableAndChart(arr);
 });
 
-// === add / update record ===
+// add / update
 async function adicionarRegistro(){
   const date = inputDate.value;
   const peso = parseFloat(inputPeso.value);
@@ -375,32 +393,33 @@ async function adicionarRegistro(){
   document.getElementById('obs').value = '';
 }
 
-// export CSV (oldest -> newest)
 function exportCSV(){
-  // read current table rows (ascending from chart data)
   const labels = chart.data.labels || [];
   const data = chart.data.datasets[0].data || [];
   if(labels.length === 0) { alert('Sem dados para exportar'); return; }
-  // labels are dd/mm/yyyy, convert back to yyyy-mm-dd
+
   const rows = [];
   for(let i=0;i<labels.length;i++){
     const parts = labels[i].split('/');
     const iso = `${parts[2]}-${parts[1]}-${parts[0]}`;
-    rows.push([iso, '', data[i]]); // days empty: can be computed by consumer
+    rows.push([iso, '', data[i]]);
   }
+
   const header = 'date;weight_kg\n';
   const csv = header + rows.map(r => `${r[0]};${Number(r[2]).toFixed(3)}`).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'peso_shihtzu.csv'; a.click(); a.remove();
+  const a = document.createElement('a'); 
+  a.href = url; 
+  a.download = 'peso_shihtzu.csv'; 
+  a.click(); 
+  a.remove();
   URL.revokeObjectURL(url);
 }
 
-// attach export to window for easy call or create button
 window.adicionarRegistro = adicionarRegistro;
 window.exportCSV = exportCSV;
 
-// optional: link export to button if you have one in DOM
 const exportBtn = document.getElementById('exportCsv');
 if(exportBtn) exportBtn.onclick = exportCSV;
 
